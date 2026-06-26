@@ -75,10 +75,10 @@ void Error_Handler(void);
 #define Sensor07_GPIO_Port GPIOA
 #define Sensor08_Pin GPIO_PIN_7
 #define Sensor08_GPIO_Port GPIOA
-#define SensorL_Pin GPIO_PIN_0
-#define SensorL_GPIO_Port GPIOB
-#define SensorR_Pin GPIO_PIN_1
+#define SensorR_Pin GPIO_PIN_0
 #define SensorR_GPIO_Port GPIOB
+#define SensorL_Pin GPIO_PIN_1
+#define SensorL_GPIO_Port GPIOB
 #define Btn_Control_Pin GPIO_PIN_2
 #define Btn_Control_GPIO_Port GPIOB
 #define STBY_Pin GPIO_PIN_8

@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -26,11 +26,21 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+//#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+
+//15mcS de amostragem
+typedef enum {
+	Espera, Calib, Mapping, Runn_Fast_Mila
+} RobotState;
+
+typedef struct {
+	float kp, ki, kd;
+	float current_error;
+} PID_Controller_t;
 
 /* USER CODE END PTD */
 
@@ -48,13 +58,21 @@
 
 /* USER CODE BEGIN PV */
 
+uint32_t t, ut;
+uint16_t SensorF[8];
+uint16_t SensorL[2];
+uint8_t i = 0;
+uint8_t ctn;
+uint16_t Adc1;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc);
+void Control();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -95,8 +113,10 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
+  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
-
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) Adc1, 1);
+	HAL_ADC_Start_IT(&hadc2);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -110,12 +130,11 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+	while (1) {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+	}
   /* USER CODE END 3 */
 }
 
@@ -166,7 +185,24 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	t = HAL_GetTick();
+	ut = 0;
+	switch (GPIO_Pin) {
+	case Btn_Control_Pin:
+		if (t - ut > 100) {
+			ctn = 1 + ctn;
+		}
+		break;
+	default:
+		break;
+	}
+}
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
 
+
+}
 /* USER CODE END 4 */
 
 /**
@@ -198,11 +234,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1) {
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT

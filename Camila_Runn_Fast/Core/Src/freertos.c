@@ -29,8 +29,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticTask_t osStaticThreadDef_t;
-typedef StaticTimer_t osStaticTimerDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -49,38 +47,36 @@ typedef StaticTimer_t osStaticTimerDef_t;
 /* USER CODE BEGIN Variables */
 
 /* USER CODE END Variables */
-/* Definitions for Read_sensors */
-osThreadId_t Read_sensorsHandle;
-uint32_t Read_sensorsBuffer[ 128 ];
-osStaticThreadDef_t Read_sensorsControlBlock;
-const osThreadAttr_t Read_sensors_attributes = {
-  .name = "Read_sensors",
-  .cb_mem = &Read_sensorsControlBlock,
-  .cb_size = sizeof(Read_sensorsControlBlock),
-  .stack_mem = &Read_sensorsBuffer[0],
-  .stack_size = sizeof(Read_sensorsBuffer),
+/* Definitions for T_PID_Control */
+osThreadId_t T_PID_ControlHandle;
+const osThreadAttr_t T_PID_Control_attributes = {
+  .name = "T_PID_Control",
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityRealtime,
 };
-/* Definitions for SensorSample */
-osTimerId_t SensorSampleHandle;
-osStaticTimerDef_t SensorSampleControlBlock;
-const osTimerAttr_t SensorSample_attributes = {
-  .name = "SensorSample",
-  .cb_mem = &SensorSampleControlBlock,
-  .cb_size = sizeof(SensorSampleControlBlock),
+/* Definitions for T_StateManager */
+osThreadId_t T_StateManagerHandle;
+const osThreadAttr_t T_StateManager_attributes = {
+  .name = "T_StateManager",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for PID_Control */
-osTimerId_t PID_ControlHandle;
-osStaticTimerDef_t PID_ControlControlBlock;
-const osTimerAttr_t PID_Control_attributes = {
-  .name = "PID_Control",
-  .cb_mem = &PID_ControlControlBlock,
-  .cb_size = sizeof(PID_ControlControlBlock),
+/* Definitions for T_OdomSD */
+osThreadId_t T_OdomSDHandle;
+const osThreadAttr_t T_OdomSD_attributes = {
+  .name = "T_OdomSD",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for myEvent01 */
-osEventFlagsId_t myEvent01Handle;
-const osEventFlagsAttr_t myEvent01_attributes = {
-  .name = "myEvent01"
+/* Definitions for Sm_DMA_Clpt */
+osSemaphoreId_t Sm_DMA_ClptHandle;
+const osSemaphoreAttr_t Sm_DMA_Clpt_attributes = {
+  .name = "Sm_DMA_Clpt"
+};
+/* Definitions for State_Flag */
+osEventFlagsId_t State_FlagHandle;
+const osEventFlagsAttr_t State_Flag_attributes = {
+  .name = "State_Flag"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,9 +84,8 @@ const osEventFlagsAttr_t myEvent01_attributes = {
 
 /* USER CODE END FunctionPrototypes */
 
-void fun_read_sensors(void *argument);
-void SensorSample_Callback(void *argument);
-void PIDControl_Callback(void *argument);
+void F_PID_Control(void *argument);
+void F_OdomSD(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -108,16 +103,13 @@ void MX_FREERTOS_Init(void) {
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
+  /* Create the semaphores(s) */
+  /* creation of Sm_DMA_Clpt */
+  Sm_DMA_ClptHandle = osSemaphoreNew(1, 0, &Sm_DMA_Clpt_attributes);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
-
-  /* Create the timer(s) */
-  /* creation of SensorSample */
-  SensorSampleHandle = osTimerNew(SensorSample_Callback, osTimerPeriodic, NULL, &SensorSample_attributes);
-
-  /* creation of PID_Control */
-  PID_ControlHandle = osTimerNew(PIDControl_Callback, osTimerPeriodic, NULL, &PID_Control_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -128,16 +120,22 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of Read_sensors */
-  Read_sensorsHandle = osThreadNew(fun_read_sensors, NULL, &Read_sensors_attributes);
+  /* creation of T_PID_Control */
+  T_PID_ControlHandle = osThreadNew(F_PID_Control, NULL, &T_PID_Control_attributes);
+
+  /* creation of T_StateManager */
+  T_StateManagerHandle = osThreadNew(F_OdomSD, NULL, &T_StateManager_attributes);
+
+  /* creation of T_OdomSD */
+  T_OdomSDHandle = osThreadNew(F_OdomSD, NULL, &T_OdomSD_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* Create the event(s) */
-  /* creation of myEvent01 */
-  myEvent01Handle = osEventFlagsNew(&myEvent01_attributes);
+  /* creation of State_Flag */
+  State_FlagHandle = osEventFlagsNew(&State_Flag_attributes);
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
@@ -145,38 +143,40 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_fun_read_sensors */
+/* USER CODE BEGIN Header_F_PID_Control */
 /**
-  * @brief  Function implementing the Read_sensors thread.
+  * @brief  Function implementing the T_PID_Control thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_fun_read_sensors */
-__weak void fun_read_sensors(void *argument)
+/* USER CODE END Header_F_PID_Control */
+void F_PID_Control(void *argument)
 {
-  /* USER CODE BEGIN fun_read_sensors */
+  /* USER CODE BEGIN F_PID_Control */
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END fun_read_sensors */
+  /* USER CODE END F_PID_Control */
 }
 
-/* SensorSample_Callback function */
-void SensorSample_Callback(void *argument)
+/* USER CODE BEGIN Header_F_OdomSD */
+/**
+* @brief Function implementing the T_StateManager thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_F_OdomSD */
+__weak void F_OdomSD(void *argument)
 {
-  /* USER CODE BEGIN SensorSample_Callback */
-
-  /* USER CODE END SensorSample_Callback */
-}
-
-/* PIDControl_Callback function */
-void PIDControl_Callback(void *argument)
-{
-  /* USER CODE BEGIN PIDControl_Callback */
-
-  /* USER CODE END PIDControl_Callback */
+  /* USER CODE BEGIN F_OdomSD */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END F_OdomSD */
 }
 
 /* Private application code --------------------------------------------------*/
