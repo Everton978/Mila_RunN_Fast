@@ -14,7 +14,7 @@
 
 void AdcSensor(){
 
-	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)SensorF, 9);
+	//HAL_ADC_Start_DMA(&hadc1, (uint32_t*)SensorF, 9);
 }
 
 
