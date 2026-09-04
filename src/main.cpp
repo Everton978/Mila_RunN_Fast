@@ -38,6 +38,7 @@ typedef struct {
 
 } PwmConfig;
 
+PwmConfig acionarPWM;
 
 typedef struct {
     float kp;       
@@ -56,7 +57,7 @@ PIDController ControlPID;
 //============================= Protoripos de Funções ================================================
 
 void configBoard();
-void ConfigPwm(PwmConfig *pwm, uint16_t freq, uint16_t Dc0, uint16_t Dc1, uint8_t res, uint8_t chan0, uint8_t chan1,  uint8_t Motor_0, uint8_t Motor_1);
+void ConfigPWM(PwmConfig *pwm, uint16_t freq, uint16_t Dc0, uint16_t Dc1, uint8_t res, uint8_t chan0, uint8_t chan1,  uint8_t Motor_0, uint8_t Motor_1);
 void pid_init(PIDController *pid, float kp, float ki, float kd, float min, float max);
 float pid_calcula(PIDController *pid, float setpoint, float atual, float dt);
 void LeiturasComFiltro();
@@ -74,9 +75,8 @@ void setup() {
   analogReadResolution(12);
 
   configBoard();
+  ConfigPWM(&acionarPWM, 1000, 0, 0, 12, 0, 1, motorEsqPin, motorDirPin);
   
-  
-
   pid_init(&ControlPID, 2.5f, 0.0f, 0.5f, -150.0f, 150.0f); 
 }
 
@@ -91,9 +91,6 @@ void loop() {
   float dt = (tempo_atual - tempo_anterior) / 1000.0f;
   if (dt <= 0.0f) dt = 0.001f; 
   tempo_anterior = tempo_atual;
-
-
-
 
   float posicao_linha = calcular_posicao();
   float setpoint = 0.0f; 
