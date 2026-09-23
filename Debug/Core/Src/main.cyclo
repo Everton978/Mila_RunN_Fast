@@ -1,0 +1,13 @@
+../Core/Src/main.c:98:7:calcular_posicao	3
+../Core/Src/main.c:123:6:LeiturasComFiltro	4
+../Core/Src/main.c:135:6:pid_init	1
+../Core/Src/main.c:145:7:pid_calcula	3
+../Core/Src/main.c:169:6:AcionarMotores	1
+../Core/Src/main.c:180:5:main	1
+../Core/Src/main.c:232:6:SystemClock_Config	3
+../Core/Src/main.c:278:13:MX_ADC1_Init	10
+../Core/Src/main.c:399:13:MX_I2C1_Init	4
+../Core/Src/main.c:447:13:MX_TIM1_Init	8
+../Core/Src/main.c:532:13:MX_DMA_Init	1
+../Core/Src/main.c:553:13:MX_GPIO_Init	1
+../Core/Src/main.c:605:6:Error_Handler	1
