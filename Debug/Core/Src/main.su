@@ -1,3 +1,12 @@
-../Core/Src/main.c:68:5:main	88	static
-../Core/Src/main.c:126:6:SystemClock_Config	88	static
-../Core/Src/main.c:175:6:Error_Handler	8	static,ignoring_inline_asm
+../Core/Src/main.c:112:7:calcular_posicao	32	static
+../Core/Src/main.c:130:6:AcionarMotores	40	static
+../Core/Src/main.c:157:6:pid_init	24	static
+../Core/Src/main.c:171:7:pid_calcula	56	static
+../Core/Src/main.c:210:5:main	48	static
+../Core/Src/main.c:287:6:SystemClock_Config	88	static
+../Core/Src/main.c:333:13:MX_ADC1_Init	24	static
+../Core/Src/main.c:472:13:MX_I2C1_Init	8	static
+../Core/Src/main.c:520:13:MX_TIM1_Init	120	static
+../Core/Src/main.c:608:13:MX_DMA_Init	16	static
+../Core/Src/main.c:629:13:MX_GPIO_Init	56	static
+../Core/Src/main.c:661:6:Error_Handler	8	static,ignoring_inline_asm
